@@ -53,6 +53,18 @@ export const fetchMyListings = createAsyncThunk(
   }
 )
 
+export const fetchRelatedProducts = createAsyncThunk(
+  'products/fetchRelated',
+  async (id, thunkAPI) => {
+    try {
+      const { data } = await axios.get(`/products/${id}/related`)
+      return data
+    } catch (error) {
+      return thunkAPI.rejectWithValue('Failed to fetch related products')
+    }
+  }
+)
+
 export const deleteProduct = createAsyncThunk(
   'products/delete',
   async (id, thunkAPI) => {
@@ -71,6 +83,7 @@ const productSlice = createSlice({
     products: [],
     product: null,
     myListings: [],
+    relatedProducts: [],
     loading: false,
     error: null,
     totalPages: 1,
@@ -110,6 +123,10 @@ const productSlice = createSlice({
 
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.myListings = state.myListings.filter((p) => p._id !== action.payload)
+      })
+
+      .addCase(fetchRelatedProducts.fulfilled, (state, action) => {
+        state.relatedProducts = action.payload
       })
   },
 })

@@ -133,3 +133,22 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   await product.deleteOne()
   res.json({ message: 'Listing deleted successfully' })
 })
+// @desc   Get related products
+// @route  GET /api/products/:id/related
+export const getRelatedProducts = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+  if (!product) {
+    res.status(404)
+    throw new Error('Product not found')
+  }
+
+  const related = await Product.find({
+    _id: { $ne: product._id },
+    category: product.category,
+    isSold: false,
+  })
+    .limit(4)
+    .populate('seller', 'name shopName isVerifiedSeller')
+
+  res.json(related)
+})
