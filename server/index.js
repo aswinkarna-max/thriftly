@@ -1,9 +1,11 @@
+// server/index.js
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { connectDB } from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
+import productRoutes from './routes/productRoutes.js'
 import { errorHandler } from './middleware/errorMiddleware.js'
 
 dotenv.config()
@@ -19,11 +21,10 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
-// Routes
 app.get('/', (req, res) => res.json({ message: 'Thriftly API is running' }))
 app.use('/api/auth', authRoutes)
+app.use('/api/products', productRoutes)
 
-// Error handler (must be last)
 app.use(errorHandler)
 
 connectDB().then(() => {
