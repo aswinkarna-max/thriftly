@@ -21,6 +21,48 @@ const INITIAL_FORM = {
   hasCertification: false,
 }
 
+function DashboardSkeleton() {
+  return (
+    <>
+      {/* Stats skeleton */}
+      <div className="grid grid-cols-3 gap-4 mb-10">
+        {Array(3).fill(0).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl p-5"
+            style={{ background: '#0f172a', border: '0.5px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="h-3 w-24 rounded skeleton-shimmer mb-3" />
+            <div className="h-7 w-12 rounded-lg skeleton-shimmer" />
+          </div>
+        ))}
+      </div>
+
+      {/* Listings grid skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {Array(8).fill(0).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl overflow-hidden"
+            style={{ background: '#0f172a', border: '0.5px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="h-44 skeleton-shimmer" />
+            <div className="p-4 space-y-2">
+              <div className="h-3 w-16 rounded-full skeleton-shimmer" />
+              <div className="h-4 w-4/5 rounded skeleton-shimmer" />
+              <div className="h-4 w-1/2 rounded skeleton-shimmer" />
+              <div className="flex justify-between mt-3">
+                <div className="h-3 w-16 rounded skeleton-shimmer" />
+                <div className="h-3 w-6 rounded skeleton-shimmer" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
 export default function SellerDashboardPage() {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
@@ -88,7 +130,11 @@ export default function SellerDashboardPage() {
             <h1 className="text-3xl font-bold text-white">My Dashboard</h1>
             <p className="text-gray-500 mt-1">
               {user?.shopName && <span className="text-emerald-400">{user.shopName} · </span>}
-              {myListings.length} active listings
+              {loading ? (
+                <span className="inline-block h-3 w-20 rounded skeleton-shimmer align-middle" />
+              ) : (
+                `${myListings.length} active listings`
+              )}
             </p>
           </div>
           <button
@@ -100,79 +146,85 @@ export default function SellerDashboardPage() {
           </button>
         </motion.div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          {[
-            { label: 'Total listings', value: myListings.length, icon: <FiPackage /> },
-            { label: 'Total views', value: myListings.reduce((a, p) => a + (p.views || 0), 0), icon: <FiEye /> },
-            { label: 'Items sold', value: myListings.filter(p => p.isSold).length, icon: '✓' },
-          ].map((stat) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl p-5"
-              style={{ background: '#0f172a', border: '0.5px solid rgba(255,255,255,0.06)' }}
-            >
-              <div className="text-gray-500 text-sm mb-1">{stat.label}</div>
-              <div className="text-2xl font-bold text-white">{stat.value}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Listings Grid */}
-        {myListings.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="text-5xl mb-4">📦</div>
-            <h3 className="text-xl font-semibold text-gray-300 mb-2">No listings yet</h3>
-            <p className="text-gray-600 mb-6">Create your first listing to start selling</p>
-            <button onClick={() => setShowForm(true)}
-              className="px-6 py-3 rounded-full text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg,#059669,#047857)' }}>
-              Create listing
-            </button>
-          </div>
+        {loading ? (
+          <DashboardSkeleton />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {myListings.map((product, index) => {
-              const cond = conditionConfig[product.condition] || conditionConfig['good']
-              return (
+          <>
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-4 mb-10">
+              {[
+                { label: 'Total listings', value: myListings.length, icon: <FiPackage /> },
+                { label: 'Total views', value: myListings.reduce((a, p) => a + (p.views || 0), 0), icon: <FiEye /> },
+                { label: 'Items sold', value: myListings.filter(p => p.isSold).length, icon: '✓' },
+              ].map((stat) => (
                 <motion.div
-                  key={product._id}
+                  key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.06 }}
-                  className="rounded-2xl overflow-hidden"
+                  className="rounded-2xl p-5"
                   style={{ background: '#0f172a', border: '0.5px solid rgba(255,255,255,0.06)' }}
                 >
-                  <div className="h-44 relative" style={{ background: 'linear-gradient(135deg,#1e293b,#2d3748)' }}>
-                    {product.images?.[0] && (
-                      <img src={product.images[0].url} alt={product.name}
-                        className="w-full h-full object-cover" />
-                    )}
-                    {product.certification?.hasCertification && (
-                      <div className="absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: 'rgba(5,150,105,0.85)', color: 'white' }}>
-                        ✓ Cert
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cond.color}`}>{cond.label}</span>
-                    <h3 className="text-sm font-semibold text-gray-100 mt-2 truncate">{product.name}</h3>
-                    <p className="text-emerald-400 font-bold mt-1">₹{product.price.toLocaleString()}</p>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-xs text-gray-600">{product.views} views</span>
-                      <button onClick={() => handleDelete(product._id)}
-                        className="text-gray-600 hover:text-red-400 transition-colors">
-                        <FiTrash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
+                  <div className="text-gray-500 text-sm mb-1">{stat.label}</div>
+                  <div className="text-2xl font-bold text-white">{stat.value}</div>
                 </motion.div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+
+            {/* Listings Grid */}
+            {myListings.length === 0 ? (
+              <div className="text-center py-24">
+                <div className="text-5xl mb-4">📦</div>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">No listings yet</h3>
+                <p className="text-gray-600 mb-6">Create your first listing to start selling</p>
+                <button onClick={() => setShowForm(true)}
+                  className="px-6 py-3 rounded-full text-sm font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg,#059669,#047857)' }}>
+                  Create listing
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {myListings.map((product, index) => {
+                  const cond = conditionConfig[product.condition] || conditionConfig['good']
+                  return (
+                    <motion.div
+                      key={product._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.06 }}
+                      className="rounded-2xl overflow-hidden"
+                      style={{ background: '#0f172a', border: '0.5px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <div className="h-44 relative" style={{ background: 'linear-gradient(135deg,#1e293b,#2d3748)' }}>
+                        {product.images?.[0] && (
+                          <img src={product.images[0].url} alt={product.name}
+                            className="w-full h-full object-cover" />
+                        )}
+                        {product.certification?.hasCertification && (
+                          <div className="absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: 'rgba(5,150,105,0.85)', color: 'white' }}>
+                            ✓ Cert
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cond.color}`}>{cond.label}</span>
+                        <h3 className="text-sm font-semibold text-gray-100 mt-2 truncate">{product.name}</h3>
+                        <p className="text-emerald-400 font-bold mt-1">₹{product.price.toLocaleString()}</p>
+                        <div className="flex items-center justify-between mt-3">
+                          <span className="text-xs text-gray-600">{product.views} views</span>
+                          <button onClick={() => handleDelete(product._id)}
+                            className="text-gray-600 hover:text-red-400 transition-colors">
+                            <FiTrash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 

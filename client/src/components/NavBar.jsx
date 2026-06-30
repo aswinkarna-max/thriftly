@@ -10,7 +10,8 @@ export default function Navbar() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.auth)
-
+  const cartItems = useSelector((state) => state.cart.items)
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
   const handleLogout = async () => {
     await dispatch(logoutUser())
     toast.success('Logged out!')
@@ -38,9 +39,14 @@ export default function Navbar() {
       {/* Nav links */}
       <div className="hidden md:flex items-center gap-8">
         <Link to="/home" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">Explore</Link>
-        <Link to="/categories" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">Categories</Link>
-        {user?.role === 'seller' && (
-          <Link to="/seller/dashboard" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">Dashboard</Link>
+            {user?.role === 'buyer' && (
+            <Link to="/orders" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">My Orders</Link>
+            )}
+            {user?.role === 'seller' && (
+            <>
+            <Link to="/seller/dashboard" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">Dashboard</Link>
+            <Link to="/seller/orders" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">Orders</Link>
+          </>
         )}
       </div>
 
@@ -53,11 +59,17 @@ export default function Navbar() {
           </Link>
         )}
         {user?.role === 'buyer' && (
-          <Link to="/cart"
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-emerald-400 transition-colors px-3 py-2">
+        <Link to="/cart"
+            className="relative flex items-center gap-2 text-sm text-gray-400 hover:text-emerald-400 transition-colors px-3 py-2">
             <FiShoppingBag size={18} />
-          </Link>
-        )}
+            {cartCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center"
+             style={{ background: '#059669', color: 'white' }}>
+            {cartCount}
+            </span>
+      )}
+  </Link>
+)}
         <div className="flex items-center gap-2 bg-gray-800/60 border border-white/5 rounded-full px-3 py-1.5">
           <FiUser size={14} className="text-gray-400" />
           <span className="text-sm text-gray-300 hidden md:block">{user?.name}</span>

@@ -11,26 +11,34 @@ import { FiSearch, FiSliders } from 'react-icons/fi'
 const CATEGORIES = ['all', 'sneakers', 'bags', 'watches', 'clothing', 'accessories', 'other']
 const CONDITIONS = ['all', 'new', 'like-new', 'good', 'fair']
 const SORTS = [
-  { value: 'newest', label: 'Newest' },
+  { value: 'newest',    label: 'Newest' },
   { value: 'price-low', label: 'Price: Low to High' },
-  { value: 'price-high', label: 'Price: High to Low' },
-  { value: 'popular', label: 'Most Popular' },
+  { value: 'price-high',label: 'Price: High to Low' },
+  { value: 'popular',   label: 'Most Popular' },
+]
+
+const ORBS = [
+  { color: 'rgba(52,211,153,0.22)', size: 500, x: '72%',  y: '-10%', dur: 18, delay: 0   },
+  { color: 'rgba(8,145,178,0.18)',  size: 420, x: '50%',  y: '60%',  dur: 22, delay: -6  },
+  { color: 'rgba(52,211,153,0.12)', size: 320, x: '88%',  y: '75%',  dur: 16, delay: -3  },
+  { color: 'rgba(16,185,129,0.14)', size: 380, x: '5%',   y: '40%',  dur: 25, delay: -10 },
+  { color: 'rgba(6,182,212,0.10)',  size: 500, x: '40%',  y: '10%',  dur: 30, delay: -15 },
 ]
 
 export default function HomePage() {
   const dispatch = useDispatch()
   const { products, loading, totalPages, page } = useSelector((state) => state.products)
 
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('all')
-  const [condition, setCondition] = useState('all')
-  const [sort, setSort] = useState('newest')
+  const [search, setSearch]           = useState('')
+  const [category, setCategory]       = useState('all')
+  const [condition, setCondition]     = useState('all')
+  const [sort, setSort]               = useState('newest')
   const [currentPage, setCurrentPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     const params = { page: currentPage, sort }
-    if (search) params.search = search
+    if (search)            params.search    = search
     if (category !== 'all') params.category = category
     if (condition !== 'all') params.condition = condition
     dispatch(fetchProducts(params))
@@ -45,19 +53,35 @@ export default function HomePage() {
     <div className="min-h-screen" style={{ background: '#030712' }}>
       <Navbar />
 
-      {/* Hero Section */}
+      {/* ─── Hero Section ─────────────────────────────────────────── */}
       <section className="pt-28 pb-16 px-6 md:px-10 relative overflow-hidden">
-        {/* Background orbs */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle,rgba(52,211,153,0.06) 0%,transparent 65%)', transform: 'translate(30%,-30%)' }} />
-        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle,rgba(59,130,246,0.04) 0%,transparent 65%)', transform: 'translate(-30%,30%)' }} />
+
+        {/* Animated glowing orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {ORBS.map((orb, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width:  orb.size,
+                height: orb.size,
+                left:   orb.x,
+                top:    orb.y,
+                background: orb.color,
+                filter: 'blur(80px)',
+                transform: 'translate(-50%, -50%)',
+                animation: `orbDrift ${orb.dur}s ease-in-out infinite alternate`,
+                animationDelay: `${orb.delay}s`,
+              }}
+            />
+          ))}
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="max-w-2xl"
+          className="max-w-2xl relative"
         >
           {/* Live pill */}
           <motion.div
@@ -65,7 +89,11 @@ export default function HomePage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
             className="inline-flex items-center gap-2 text-xs font-medium px-4 py-1.5 rounded-full mb-6"
-            style={{ background: 'rgba(52,211,153,0.08)', border: '0.5px solid rgba(52,211,153,0.2)', color: '#34d399' }}
+            style={{
+              background: 'rgba(52,211,153,0.08)',
+              border: '0.5px solid rgba(52,211,153,0.2)',
+              color: '#34d399',
+            }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Live — verified listings updated daily
@@ -92,10 +120,12 @@ export default function HomePage() {
           {/* Stats */}
           <div className="flex gap-8">
             {[['12K+', 'Listings'], ['3.4K', 'Sellers'], ['98%', 'Satisfaction']].map(([num, label]) => (
-              <motion.div key={label}
+              <motion.div
+                key={label}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}>
+                transition={{ delay: 0.4 }}
+              >
                 <div className="text-xl font-bold text-white">{num}</div>
                 <div className="text-xs text-gray-500 mt-0.5">{label}</div>
               </motion.div>
@@ -104,7 +134,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* Search + Filter Bar */}
+      {/* ─── Search + Filter Bar ──────────────────────────────────── */}
       <section className="px-6 md:px-10 mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -113,10 +143,11 @@ export default function HomePage() {
           className="flex gap-3 mb-5"
         >
           {/* Search */}
-          <div className="flex-1 flex items-center gap-3 px-4 py-3 rounded-full"
+          <div
+            className="flex-1 flex items-center gap-3 px-4 py-3 rounded-full"
             style={{ background: '#111827', border: '0.5px solid rgba(255,255,255,0.08)' }}
             onFocus={e => e.currentTarget.style.borderColor = 'rgba(52,211,153,0.4)'}
-            onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+            onBlur={e  => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
           >
             <FiSearch size={16} className="text-gray-500 flex-shrink-0" />
             <input
@@ -145,9 +176,15 @@ export default function HomePage() {
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             className="px-4 py-3 rounded-full text-sm outline-none"
-            style={{ background: '#111827', border: '0.5px solid rgba(255,255,255,0.08)', color: '#9ca3af' }}
+            style={{
+              background: '#111827',
+              border: '0.5px solid rgba(255,255,255,0.08)',
+              color: '#9ca3af',
+            }}
           >
-            {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {SORTS.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
           </select>
         </motion.div>
 
@@ -198,7 +235,7 @@ export default function HomePage() {
         </AnimatePresence>
       </section>
 
-      {/* Product Grid */}
+      {/* ─── Product Grid ─────────────────────────────────────────── */}
       <section className="px-6 md:px-10 pb-20">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -246,14 +283,20 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Gradient shift keyframe */}
+      {/* ─── Keyframes ────────────────────────────────────────────── */}
       <style>{`
         @keyframes gradientShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
+        }
+        @keyframes orbDrift {
+          0%   { transform: translate(-50%, -50%) scale(1); }
+          33%  { transform: translate(calc(-50% + 40px), calc(-50% - 30px)) scale(1.08); }
+          66%  { transform: translate(calc(-50% - 20px), calc(-50% + 50px)) scale(0.95); }
+          100% { transform: translate(calc(-50% + 30px), calc(-50% + 20px)) scale(1.05); }
         }
       `}</style>
     </div>
   )
-}
+} 

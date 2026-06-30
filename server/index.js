@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser'
 import { connectDB } from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import productRoutes from './routes/productRoutes.js'
+import orderRoutes from './routes/orderRoutes.js'
 import { errorHandler } from './middleware/errorMiddleware.js'
 
 dotenv.config()
@@ -24,6 +25,7 @@ app.use(cookieParser())
 app.get('/', (req, res) => res.json({ message: 'Thriftly API is running' }))
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/orders', orderRoutes)
 
 app.use(errorHandler)
 

@@ -8,6 +8,11 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import SellerDashboardPage from './pages/SellerDashboardPage.jsx'
 import ProductDetailPage from './pages/ProductDetailPage.jsx'
+import CartPage from './pages/CartPage.jsx'
+import CheckoutPage from './pages/CheckoutPage.jsx'
+import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx'
+import OrdersPage from './pages/OrdersPage.jsx'
+import SellerOrdersPage from './pages/SellerOrderPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 function App() {
@@ -28,8 +33,23 @@ function App() {
       <Route path="/products/:id" element={
         <ProtectedRoute><ProductDetailPage /></ProtectedRoute>
       } />
+      <Route path="/cart" element={
+        <ProtectedRoute><CartPage /></ProtectedRoute>
+      } />
+      <Route path="/checkout" element={
+        <ProtectedRoute><CheckoutPage /></ProtectedRoute>
+      } />
+      <Route path="/orders/:id" element={
+        <ProtectedRoute><OrderConfirmationPage /></ProtectedRoute>
+      } />
+      <Route path="/orders" element={
+        <ProtectedRoute><OrdersPage /></ProtectedRoute>
+      } />
       <Route path="/seller/dashboard" element={
         <ProtectedRoute roleRequired="seller"><SellerDashboardPage /></ProtectedRoute>
+      } />
+      <Route path="/seller/orders" element={
+      <ProtectedRoute roleRequired="seller"><SellerOrdersPage /></ProtectedRoute>
       } />
     </Routes>
   )

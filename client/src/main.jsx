@@ -6,6 +6,9 @@ import { store } from './app/store.js'
 import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
+<ErrorBoundary><App /></ErrorBoundary>
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

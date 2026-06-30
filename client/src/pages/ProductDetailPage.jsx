@@ -11,6 +11,7 @@ import {
 import { fetchProductById, fetchRelatedProducts } from '../features/productSlice.js'
 import Navbar from '../components/NavBar.jsx'
 import ProductCard from '../components/ProductCard.jsx'
+import { addToCart } from '../features/cartSlice.js'
 import toast from 'react-hot-toast'
 
 const conditionConfig = {
@@ -62,11 +63,18 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!user) {
-      toast.error('Please login to add to cart')
-      return
+    toast.error('Please login to add to cart')
+    return
     }
+    dispatch(addToCart({
+        product: product._id,
+        name: product.name,
+        image: product.images?.[0]?.url || '',
+        price: product.price,
+        seller: product.seller?._id,
+        }))
     toast.success(`${product.name} added to cart!`)
-  }
+    }
 
   if (loading || !product) {
     return (

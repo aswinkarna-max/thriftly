@@ -1,10 +1,97 @@
 // client/src/pages/RegisterPage.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { registerUser, clearError } from '../features/authSlice.js'
 import toast from 'react-hot-toast'
+
+const NUM_PARTICLES = 140
+
+function initParticles(W, H) {
+  return Array.from({ length: NUM_PARTICLES }, () => {
+    const emerald = Math.random() < 0.3
+    const cyan    = !emerald && Math.random() < 0.2
+    return {
+      x:            Math.random() * W,
+      y:            Math.random() * H,
+      r:            Math.random() * 1.6 + 0.3,
+      vx:           (Math.random() - 0.5) * 0.25,
+      vy:           (Math.random() - 0.5) * 0.25,
+      alpha:        Math.random() * 0.5 + 0.15,
+      twinkleSpeed: Math.random() * 0.02 + 0.005,
+      twinkleDir:   Math.random() < 0.5 ? 1 : -1,
+      color:        emerald ? '52,211,153' : cyan ? '6,182,212' : '255,255,255',
+    }
+  })
+}
+
+function ParticleCanvas() {
+  const canvasRef = useRef(null)
+  const rafRef    = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const W   = window.innerWidth
+    const H   = window.innerHeight
+    canvas.width  = W
+    canvas.height = H
+
+    const particles = initParticles(W, H)
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H)
+
+      for (const p of particles) {
+        p.alpha += p.twinkleSpeed * p.twinkleDir
+        if (p.alpha > 0.75 || p.alpha < 0.05) p.twinkleDir *= -1
+        p.x += p.vx
+        p.y += p.vy
+        if (p.x < 0) p.x = W
+        if (p.x > W) p.x = 0
+        if (p.y < 0) p.y = H
+        if (p.y > H) p.y = 0
+
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${p.color},${p.alpha})`
+        ctx.fill()
+      }
+
+      let connected = 0
+      for (let i = 0; i < NUM_PARTICLES && connected < 80; i++) {
+        for (let j = i + 1; j < NUM_PARTICLES && connected < 80; j++) {
+          const dx   = particles[i].x - particles[j].x
+          const dy   = particles[i].y - particles[j].y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 100) {
+            ctx.beginPath()
+            ctx.moveTo(particles[i].x, particles[i].y)
+            ctx.lineTo(particles[j].x, particles[j].y)
+            ctx.strokeStyle = `rgba(52,211,153,${(1 - dist / 100) * 0.12})`
+            ctx.lineWidth = 0.5
+            ctx.stroke()
+            connected++
+          }
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(draw)
+    }
+
+    draw()
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+    />
+  )
+}
 
 export default function RegisterPage() {
   const dispatch = useDispatch()
@@ -12,147 +99,160 @@ export default function RegisterPage() {
   const { user, loading, error } = useSelector((state) => state.auth)
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'buyer',
-    shopName: '',
+    name: '', email: '', password: '', role: 'buyer', shopName: '',
   })
 
   useEffect(() => {
-    if (user) {
-      navigate(user.role === 'seller' ? '/seller/dashboard' : '/home')
-    }
+    if (user) navigate(user.role === 'seller' ? '/seller/dashboard' : '/home')
   }, [user, navigate])
 
   useEffect(() => {
-    if (error) {
-      toast.error(error)
-      dispatch(clearError())
-    }
+    if (error) { toast.error(error); dispatch(clearError()) }
   }, [error, dispatch])
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleSubmit = (e) => { e.preventDefault(); dispatch(registerUser(form)) }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    dispatch(registerUser(form))
+  const inputStyle = {
+    background: '#1e293b',
+    border: '0.5px solid rgba(255,255,255,0.08)',
   }
+  const inputFocus = (e) => e.target.style.borderColor = 'rgba(52,211,153,0.4)'
+  const inputBlur  = (e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden"
+      style={{ background: '#030712' }}
+    >
+      <ParticleCanvas />
+
+      {/* Soft radial glow behind form */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: 600, height: 600,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(52,211,153,0.06) 0%, transparent 70%)',
+          top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-gray-900 rounded-2xl p-8 shadow-2xl border border-gray-800"
+        className="w-full max-w-md rounded-2xl p-8 relative z-10"
+        style={{
+          background: 'rgba(15,23,42,0.85)',
+          border: '0.5px solid rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
       >
-        <h1 className="text-3xl font-bold text-emerald-400 mb-2">Join Thriftly</h1>
-        <p className="text-gray-400 mb-8">Create your account</p>
+        {/* Logo */}
+        <div className="flex items-center gap-2 mb-8">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg,#059669,#047857)' }}
+          >
+            <span className="text-white font-black text-sm">T</span>
+          </div>
+          <span className="text-white font-bold text-lg">Thriftly</span>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <h1 className="text-2xl font-bold text-white mb-1">Join Thriftly</h1>
+        <p className="text-gray-500 text-sm mb-8">Create your account</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Full Name</label>
+            <label className="text-xs text-gray-500 mb-1.5 block">Full name</label>
             <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              placeholder="John Doe"
-              className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none border border-gray-700 focus:border-emerald-500 transition"
+              type="text" name="name" value={form.name}
+              onChange={handleChange} required placeholder="John Doe"
+              className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
+              style={inputStyle} onFocus={inputFocus} onBlur={inputBlur}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
+            <label className="text-xs text-gray-500 mb-1.5 block">Email</label>
             <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              placeholder="you@example.com"
-              className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none border border-gray-700 focus:border-emerald-500 transition"
+              type="email" name="email" value={form.email}
+              onChange={handleChange} required placeholder="you@example.com"
+              className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
+              style={inputStyle} onFocus={inputFocus} onBlur={inputBlur}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
+            <label className="text-xs text-gray-500 mb-1.5 block">Password</label>
             <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none border border-gray-700 focus:border-emerald-500 transition"
+              type="password" name="password" value={form.password}
+              onChange={handleChange} required placeholder="••••••••"
+              className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
+              style={inputStyle} onFocus={inputFocus} onBlur={inputBlur}
             />
           </div>
 
           {/* Role selector */}
           <div>
-            <label className="block text-sm text-gray-400 mb-2">I want to</label>
+            <label className="text-xs text-gray-500 mb-2 block">I want to</label>
             <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, role: 'buyer' })}
-                className={`py-3 rounded-xl border text-sm font-medium transition ${
-                  form.role === 'buyer'
-                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-emerald-500'
-                }`}
-              >
-                Buy items
-              </button>
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, role: 'seller' })}
-                className={`py-3 rounded-xl border text-sm font-medium transition ${
-                  form.role === 'seller'
-                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-emerald-500'
-                }`}
-              >
-                Sell items
-              </button>
+              {[
+                { value: 'buyer',  label: 'Buy items' },
+                { value: 'seller', label: 'Sell items' },
+              ].map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, role: r.value })}
+                  className="py-3 rounded-xl text-sm font-medium transition-all"
+                  style={{
+                    background: form.role === r.value ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.02)',
+                    border: form.role === r.value ? '0.5px solid rgba(52,211,153,0.35)' : '0.5px solid rgba(255,255,255,0.08)',
+                    color: form.role === r.value ? '#34d399' : '#9ca3af',
+                  }}
+                >
+                  {r.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Shop name — only shows if seller */}
+          {/* Shop name — only for sellers */}
           {form.role === 'seller' && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               transition={{ duration: 0.3 }}
             >
-              <label className="block text-sm text-gray-400 mb-1">Shop Name</label>
+              <label className="text-xs text-gray-500 mb-1.5 block">Shop name</label>
               <input
-                type="text"
-                name="shopName"
-                value={form.shopName}
-                onChange={handleChange}
-                required
-                placeholder="My Thrift Shop"
-                className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none border border-gray-700 focus:border-emerald-500 transition"
+                type="text" name="shopName" value={form.shopName}
+                onChange={handleChange} required placeholder="My Thrift Shop"
+                className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
+                style={inputStyle} onFocus={inputFocus} onBlur={inputBlur}
               />
             </motion.div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+          <motion.button
+            type="submit" disabled={loading}
+            whileTap={{ scale: 0.97 }}
+            className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            style={{ background: 'linear-gradient(135deg,#059669,#047857)' }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 8px 32px rgba(5,150,105,0.35)'}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
           >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
+            {loading ? 'Creating account...' : 'Create account'}
+          </motion.button>
         </form>
 
-        <p className="text-gray-500 text-sm text-center mt-6">
+        <p className="text-gray-600 text-sm text-center mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-emerald-400 hover:underline">
+          <Link to="/login" className="text-emerald-400 hover:text-emerald-300 transition-colors">
             Sign in
           </Link>
         </p>
