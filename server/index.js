@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://thriftly-flame.vercel.app/login'
+    'https://thriftly-flame.vercel.app'
   ],
   credentials: true
 }))
